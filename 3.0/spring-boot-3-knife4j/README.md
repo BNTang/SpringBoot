@@ -40,7 +40,7 @@
 
 1. **克隆项目**
    ```bash
-   git clone https://github.com/your-repo/spring-boot-3-knife4j.git
+   git clone git@github.com:BNTang/SpringBoot.git
    ```
 
 2. **导入IDEA/Eclipse**
