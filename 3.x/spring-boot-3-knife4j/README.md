@@ -1,7 +1,6 @@
+# Spring Boot 3 集成 Knife4j 完整指南
 
-# spring-boot-3-knife4j
-
-本项目是一个基于 Spring Boot 3.x 和 Knife4j 的后端接口示例，适合初学者快速上手 Spring Boot 3、接口文档自动生成、健康检查等常用开发场景。
+本项目是一个基于 Spring Boot 3.x 和 Knife4j 的后端接口示例，**重点讲解如何在 Spring Boot 3 中正确集成 Knife4j**，适合初学者快速上手接口文档自动生成、在线调试等功能。
 
 ---
 
@@ -9,30 +8,130 @@
 
 - [项目简介](#项目简介)
 - [环境要求](#环境要求)
+- [Knife4j 集成步骤](#knife4j-集成步骤)
+- [配置文件详解](#配置文件详解)
 - [快速启动](#快速启动)
-- [接口文档说明](#接口文档说明)
-- [健康检查接口](#健康检查接口)
-- [核心代码说明](#核心代码说明)
-- [常见问题](#常见问题)
-- [参考资料](#参考资料)
+- [接口文档使用指南](#接口文档使用指南)
+- [常见注解使用](#常见注解使用)
+- [常见问题与解决方案](#常见问题与解决方案)
+- [最佳实践](#最佳实践)
 
 ---
 
 ## 项目简介
 
-- 使用 Spring Boot 3.4.4 作为基础框架，JDK 21。
-- 集成 Knife4j（Swagger 增强版）自动生成接口文档，支持在线调试。
-- 提供健康检查接口，方便服务监控。
-- 启动后自动在控制台输出访问地址、Spring Boot 版本、JDK 版本、项目名称等信息，便于开发调试。
-- 代码注释详细，适合学习和二次开发。
+- **Spring Boot 3.4.4** + **JDK 21** 现代化技术栈
+- **Knife4j 4.4.0** 最新版本，完美支持 Spring Boot 3
+- **零配置启动**，开箱即用的接口文档
+- **详细注释**，每行代码都有说明
+- **通用工具类**，可直接复制到其他项目使用
 
 ---
 
 ## 环境要求
 
-- JDK 21 及以上
-- Maven 3.6 及以上
-- 推荐使用 IntelliJ IDEA 或 Eclipse
+| 组件 | 版本要求 | 说明 |
+|------|----------|------|
+| JDK | 21+ | Spring Boot 3 最低要求 JDK 17 |
+| Maven | 3.6+ | 构建工具 |
+| IDE | IDEA/Eclipse | 推荐 IntelliJ IDEA |
+
+---
+
+## Knife4j 集成步骤
+
+### 第一步：添加依赖
+
+在 `pom.xml` 中添加 Knife4j 依赖：
+
+```xml
+<!-- Knife4j Spring Boot 3 专用依赖 -->
+<dependency>
+    <groupId>com.github.xiaoymin</groupId>
+    <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
+    <version>4.4.0</version>
+</dependency>
+```
+
+**重要说明：**
+- Spring Boot 3 必须使用 `knife4j-openapi3-jakarta-spring-boot-starter`
+- 老版本 `knife4j-spring-boot-starter` 不支持 Spring Boot 3
+- `jakarta` 版本是为了适配 Spring Boot 3 的 Jakarta EE 规范
+
+### 第二步：配置 application.yml
+
+```yaml
+# 服务基础配置
+server:
+  port: 8123                    # 服务端口
+  servlet:
+    context-path: /api          # 接口前缀
+
+spring:
+  application:
+    name: spring-boot-3-knife4j # 应用名称
+
+# SpringDoc 配置（Knife4j 基于此）
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html      # Swagger UI 访问路径
+    tags-sorter: alpha          # 标签按字母排序
+    operations-sorter: alpha    # 接口按字母排序
+  api-docs:
+    path: /v3/api-docs         # OpenAPI 文档路径
+  group-configs:
+    - group: 'default'         # 分组名称
+      paths-to-match: '/**'    # 扫描路径
+      packages-to-scan: your.package.controller  # 扫描包路径
+
+# Knife4j 增强配置
+knife4j:
+  enable: true                 # 启用 Knife4j 增强
+  setting:
+    language: zh_cn            # 界面语言设置为中文
+```
+
+### 第三步：创建 Controller
+
+```java
+@RestController
+@RequestMapping("/demo")
+@Tag(name = "演示接口", description = "Knife4j 集成演示")
+public class DemoController {
+    
+    @GetMapping("/hello")
+    @Operation(summary = "Hello接口", description = "返回问候语")
+    public String hello() {
+        return "Hello, Knife4j!";
+    }
+}
+```
+
+### 第四步：启动项目
+
+运行 `SpringBoot3Knife4jApplication.java`，访问：
+- **Knife4j 文档**：http://localhost:8123/api/doc.html
+- **Swagger UI**：http://localhost:8123/api/swagger-ui.html
+
+---
+
+## 配置文件详解
+
+### SpringDoc 配置说明
+
+| 配置项 | 作用 | 推荐值 |
+|--------|------|--------|
+| `swagger-ui.path` | Swagger UI 访问路径 | `/swagger-ui.html` |
+| `api-docs.path` | OpenAPI JSON 文档路径 | `/v3/api-docs` |
+| `packages-to-scan` | 扫描的 Controller 包 | 你的 controller 包路径 |
+| `paths-to-match` | 扫描的接口路径 | `/**` (所有路径) |
+
+### Knife4j 配置说明
+
+| 配置项 | 作用 | 可选值 |
+|--------|------|--------|
+| `enable` | 是否启用 Knife4j 增强 | `true/false` |
+| `setting.language` | 界面语言 | `zh_cn/en` |
 
 ---
 
@@ -40,18 +139,23 @@
 
 1. **克隆项目**
    ```bash
-   git clone git@github.com:BNTang/SpringBoot.git
+   git clone [项目地址]
+   cd spring-boot-3-knife4j
    ```
 
-2. **导入IDEA/Eclipse**
+2. **修改配置**
+   ```yaml
+   # application.yml 中修改包扫描路径
+   packages-to-scan: chat.it666.springboot3knife4j.controller
+   ```
 
-3. **构建并启动项目**
+3. **启动项目**
+   
    ```bash
    mvn spring-boot:run
-   ```
-   或直接运行 `SpringBoot3Knife4jApplication.java` 的 main 方法。
-
-4. **启动成功后，控制台会输出如下信息：**
+```
+   
+4. **查看控制台输出**
    ```
    ----------------------------------------------------------
    项目 'spring-boot-3-knife4j' 启动成功！
@@ -63,79 +167,202 @@
 
 ---
 
-## 接口文档说明
+## 接口文档使用指南
 
-- **Knife4j 文档页面**  
-  [http://localhost:8123/api/doc.html](http://localhost:8123/api/doc.html)  
-  可查看所有接口说明并在线调试。
+### 1. 访问文档页面
 
-- **Swagger UI 页面**  
-  [http://localhost:8123/api/swagger-ui.html](http://localhost:8123/api/swagger-ui.html)  
-  也是接口文档页面，Knife4j 是对 Swagger 的增强。
+- **推荐使用 Knife4j**：http://localhost:8123/api/doc.html
+  - 界面更美观，功能更强大
+  - 支持离线文档导出
+  - 支持接口调试
 
----
+- **原生 Swagger UI**：http://localhost:8123/api/swagger-ui.html
+  - OpenAPI 标准界面
+  - 功能相对简单
 
-## 健康检查接口
+### 2. 在线接口调试
 
-- **接口地址**  
-  `GET http://localhost:8123/api/health`
+1. 打开 Knife4j 文档页面
+2. 选择要测试的接口
+3. 点击"调试"按钮
+4. 填写请求参数
+5. 点击"发送"查看响应结果
 
-- **返回内容**  
-  ```
-  ok
-  ```
+### 3. 文档导出
 
-- **用途**  
-  用于服务监控、负载均衡等场景，判断服务是否存活。
-
----
-
-## 核心代码说明
-
-### 1. 启动类
-
-`SpringBoot3Knife4jApplication.java`  
-负责启动项目，并调用 `StartupInfoPrinter` 工具类自动输出项目信息。
-
-### 2. 启动信息打印工具
-
-`StartupInfoPrinter.java`  
-通用工具类，自动输出访问地址、版本号等信息。可直接复制到其他 Spring Boot 项目中复用。
-
-### 3. 健康检查接口
-
-`HealthController.java`  
-提供 `/health` GET 接口，返回 "ok"。
-
-### 4. 配置文件
-
-`application.yml`  
-配置端口、上下文路径、Knife4j、Swagger 等参数。
+Knife4j 支持导出多种格式的接口文档：
+- **Word 文档**：适合给产品经理
+- **HTML 文档**：适合离线查看
+- **Markdown 文档**：适合开发者
 
 ---
 
-## 常见问题
+## 常见注解使用
 
-- **Q: 端口被占用怎么办？**  
-  A: 修改 `application.yml` 中的 `server.port` 配置。
+### Controller 类注解
 
-- **Q: 如何修改项目访问路径？**  
-  A: 修改 `application.yml` 中的 `server.servlet.context-path`。
+```java
+@RestController
+@RequestMapping("/user")
+@Tag(name = "用户管理", description = "用户相关的所有接口")
+public class UserController {
+    // ...
+}
+```
 
-- **Q: 如何添加自己的接口？**  
-  A: 在 `chat.it666.springboot3knife4j.controller` 包下新建 Controller 类即可，Knife4j 会自动扫描。
+### 接口方法注解
 
-- **Q: 控制台没有输出访问地址？**  
-  A: 请确保 `StartupInfoPrinter.print()` 在启动类中被正确调用。
+```java
+@PostMapping("/create")
+@Operation(summary = "创建用户", description = "创建一个新的用户账户")
+@ApiResponse(responseCode = "200", description = "创建成功")
+@ApiResponse(responseCode = "400", description = "参数错误")
+public Result<User> createUser(@RequestBody @Parameter(description = "用户信息") User user) {
+    // ...
+}
+```
+
+### 实体类注解
+
+```java
+@Schema(description = "用户实体")
+public class User {
+    
+    @Schema(description = "用户ID", example = "1")
+    private Long id;
+    
+    @Schema(description = "用户名", required = true, example = "张三")
+    private String username;
+    
+    @Schema(description = "邮箱", example = "zhangsan@example.com")
+    private String email;
+}
+```
+
+---
+
+## 常见问题与解决方案
+
+### 1. 文档页面 404
+
+**问题**：访问 `/doc.html` 返回 404
+
+**原因**：依赖版本不对或配置错误
+
+**解决方案**：
+```xml
+<!-- 确保使用正确的依赖 -->
+<dependency>
+    <groupId>com.github.xiaoymin</groupId>
+    <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
+    <version>4.4.0</version>
+</dependency>
+```
+
+### 2. 接口扫描不到
+
+**问题**：Controller 写了但文档里看不到
+
+**解决方案**：
+```yaml
+springdoc:
+  group-configs:
+    - group: 'default'
+      packages-to-scan: com.yourpackage.controller  # 确保包路径正确
+```
+
+### 3. 中文乱码
+
+**问题**：接口文档中文显示乱码
+
+**解决方案**：
+```yaml
+knife4j:
+  setting:
+    language: zh_cn  # 设置中文语言
+```
+
+### 4. 生产环境安全问题
+
+**问题**：生产环境不想暴露接口文档
+
+**解决方案**：
+```yaml
+# application-prod.yml
+knife4j:
+  enable: false  # 生产环境关闭
+```
+
+---
+
+## 最佳实践
+
+### 1. 环境区分配置
+
+```yaml
+# application-dev.yml (开发环境)
+knife4j:
+  enable: true
+
+# application-prod.yml (生产环境)  
+knife4j:
+  enable: false
+```
+
+### 2. 接口分组管理
+
+```yaml
+springdoc:
+  group-configs:
+    - group: '用户模块'
+      paths-to-match: '/user/**'
+      packages-to-scan: com.example.user.controller
+    - group: '订单模块'
+      paths-to-match: '/order/**'
+      packages-to-scan: com.example.order.controller
+```
+
+### 3. 统一响应格式
+
+```java
+@Schema(description = "统一响应格式")
+public class Result<T> {
+    @Schema(description = "状态码", example = "200")
+    private Integer code;
+    
+    @Schema(description = "响应消息", example = "操作成功")
+    private String message;
+    
+    @Schema(description = "响应数据")
+    private T data;
+}
+```
+
+### 4. 全局异常处理
+
+```java
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+    
+    @ExceptionHandler(Exception.class)
+    @Operation(hidden = true)  // 隐藏异常处理方法
+    public Result<String> handleException(Exception e) {
+        return Result.error(e.getMessage());
+    }
+}
+```
 
 ---
 
 ## 参考资料
 
-- [Spring Boot 官方文档](https://docs.spring.io/spring-boot/docs/current/reference/html/)
 - [Knife4j 官方文档](https://doc.xiaominfo.com/)
-- [Swagger 官方文档](https://swagger.io/docs/)
+- [SpringDoc OpenAPI 文档](https://springdoc.org/)
+- [Spring Boot 3 官方文档](https://docs.spring.io/spring-boot/docs/current/reference/html/)
+- [OpenAPI 3.0 规范](https://swagger.io/specification/)
 
 ---
 
-如有问题欢迎提 issue 或留言交流！
+**如果这个教程对你有帮助，请给个 ⭐ Star 支持一下！**
+
+有问题欢迎提 Issue
